@@ -1,16 +1,22 @@
-const express = require("express");
-const cors = require("cors");
-const db = require("./db");
-
-const transactionRoutes = require("./routes/transactionRoutes");
-const authRoutes = require("./routes/authRoutes");
+require('dotenv').config(); // Add this at the very top
+const express = require('express');
+const cors = require('cors');
 
 const app = express();
+const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/auth", authRoutes);
-app.use("/api/transactions", transactionRoutes);
+// Your routes
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/transactions', require('./routes/transactions'));
 
-app.listen(5000, () => console.log("Server running on 5000"));
+// Health check
+app.get('/', (req, res) => {
+  res.json({ message: 'Money Manager API is running' });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
