@@ -8,7 +8,7 @@ const db = require('../db');
 router.post('/signup', async (req, res) => {
   console.log('Signup request received:', req.body);
   
-  const { name, email, password } = req.body;
+  const { name, email, password } = req.body;  // Frontend sends 'name'
 
   // Validation
   if (!name || !email || !password) {
@@ -37,8 +37,8 @@ router.post('/signup', async (req, res) => {
       // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Insert new user
-      const insertQuery = 'INSERT INTO users (name, email, password) VALUES (?, ?, ?)';
+      // Insert new user - FIXED: use 'username' column
+      const insertQuery = 'INSERT INTO users (username, email, password) VALUES (?, ?, ?)';
       db.query(insertQuery, [name, email, hashedPassword], (err, result) => {
         if (err) {
           console.error('Insert user error:', err);
@@ -107,7 +107,7 @@ router.post('/login', (req, res) => {
         token, 
         user: { 
           id: user.id, 
-          name: user.name, 
+          name: user.username,  // FIXED: use 'username' from database
           email: user.email 
         } 
       });
