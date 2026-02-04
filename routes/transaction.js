@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const jwt = require('jsonwebtoken');
 
 // Middleware to verify token
 const authMiddleware = (req, res, next) => {
@@ -9,7 +10,6 @@ const authMiddleware = (req, res, next) => {
     return res.status(401).json({ error: 'No token provided' });
   }
 
-  const jwt = require('jsonwebtoken');
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
     req.userId = decoded.id;
@@ -23,7 +23,10 @@ const authMiddleware = (req, res, next) => {
 router.get('/', authMiddleware, (req, res) => {
   const query = 'SELECT * FROM transactions WHERE user_id = ? ORDER BY created_at DESC';
   db.query(query, [req.userId], (err, results) => {
-    if (err) return res.status(500).json({ error: 'Database error' });
+    if (err) {
+      console.error('Get transactions error:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
     res.json(results);
   });
 });
@@ -34,7 +37,10 @@ router.post('/', authMiddleware, (req, res) => {
 
   const query = 'INSERT INTO transactions (user_id, type, amount, category, division, description, account) VALUES (?, ?, ?, ?, ?, ?, ?)';
   db.query(query, [req.userId, type, amount, category, division, description, account], (err, result) => {
-    if (err) return res.status(500).json({ error: 'Database error' });
+    if (err) {
+      console.error('Create transaction error:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
 
     // Update account balance
     const updateAccountQuery = 'UPDATE accounts SET balance = balance + ? WHERE user_id = ? AND name = ?';
@@ -54,7 +60,10 @@ router.put('/:id', authMiddleware, (req, res) => {
 
   const query = 'UPDATE transactions SET amount = ?, category = ?, division = ?, description = ? WHERE id = ? AND user_id = ?';
   db.query(query, [amount, category, division, description, id, req.userId], (err, result) => {
-    if (err) return res.status(500).json({ error: 'Database error' });
+    if (err) {
+      console.error('Update transaction error:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Transaction not found' });
     }
@@ -77,7 +86,10 @@ router.get('/summary/:view', authMiddleware, (req, res) => {
 
   const query = `SELECT type, SUM(amount) as total FROM transactions WHERE user_id = ? ${dateFilter} GROUP BY type`;
   db.query(query, [req.userId], (err, results) => {
-    if (err) return res.status(500).json({ error: 'Database error' });
+    if (err) {
+      console.error('Get summary error:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
     res.json(results);
   });
 });
@@ -86,7 +98,10 @@ router.get('/summary/:view', authMiddleware, (req, res) => {
 router.get('/summary/category', authMiddleware, (req, res) => {
   const query = 'SELECT category, SUM(amount) as total FROM transactions WHERE user_id = ? AND type = "expense" GROUP BY category';
   db.query(query, [req.userId], (err, results) => {
-    if (err) return res.status(500).json({ error: 'Database error' });
+    if (err) {
+      console.error('Get category summary error:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
     res.json(results);
   });
 });
@@ -117,7 +132,10 @@ router.get('/filter', authMiddleware, (req, res) => {
   query += ' ORDER BY created_at DESC';
 
   db.query(query, params, (err, results) => {
-    if (err) return res.status(500).json({ error: 'Database error' });
+    if (err) {
+      console.error('Filter transactions error:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
     res.json(results);
   });
 });
@@ -126,7 +144,10 @@ router.get('/filter', authMiddleware, (req, res) => {
 router.get('/accounts', authMiddleware, (req, res) => {
   const query = 'SELECT * FROM accounts WHERE user_id = ?';
   db.query(query, [req.userId], (err, results) => {
-    if (err) return res.status(500).json({ error: 'Database error' });
+    if (err) {
+      console.error('Get accounts error:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
     res.json(results);
   });
 });
@@ -137,7 +158,10 @@ router.post('/accounts', authMiddleware, (req, res) => {
 
   const query = 'INSERT INTO accounts (user_id, name, balance) VALUES (?, ?, ?)';
   db.query(query, [req.userId, name, balance || 0], (err, result) => {
-    if (err) return res.status(500).json({ error: 'Database error' });
+    if (err) {
+      console.error('Create account error:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
     res.status(201).json({ id: result.insertId, message: 'Account created' });
   });
 });

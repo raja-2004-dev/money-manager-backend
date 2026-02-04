@@ -19,11 +19,13 @@ router.post('/signup', async (req, res) => {
         if (err.code === 'ER_DUP_ENTRY') {
           return res.status(400).json({ error: 'Email already exists' });
         }
+        console.error('Signup error:', err);
         return res.status(500).json({ error: 'Database error' });
       }
       res.status(201).json({ message: 'User created successfully' });
     });
   } catch (error) {
+    console.error('Server error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -35,6 +37,7 @@ router.post('/login', (req, res) => {
   const query = 'SELECT * FROM users WHERE email = ?';
   db.query(query, [email], async (err, results) => {
     if (err) {
+      console.error('Login error:', err);
       return res.status(500).json({ error: 'Database error' });
     }
 
@@ -57,7 +60,10 @@ router.post('/login', (req, res) => {
       { expiresIn: '7d' }
     );
 
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email } });
+    res.json({ 
+      token, 
+      user: { id: user.id, name: user.name, email: user.email } 
+    });
   });
 });
 
