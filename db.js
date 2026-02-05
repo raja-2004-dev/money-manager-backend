@@ -11,16 +11,25 @@ const db = mysql.createConnection({
 
 db.connect((err) => {
   if (err) {
-    console.error('Database connection failed:', err);
-    console.error('Connection details (without password):', {
+    console.error('❌ Database connection failed:', err.message);
+    console.error('Connection config:', {
       host: process.env.DB_HOST,
       port: process.env.DB_PORT,
       user: process.env.DB_USER,
       database: process.env.DB_NAME
     });
-    process.exit(1);
+    // Don't exit, let Render retry
+    return;
   }
-  console.log('Connected to MySQL database successfully');
+  console.log('✅ Connected to MySQL database successfully');
+});
+
+// Handle connection errors
+db.on('error', (err) => {
+  console.error('Database error:', err);
+  if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+    console.log('Reconnecting to database...');
+  }
 });
 
 module.exports = db;
