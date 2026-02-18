@@ -26,3 +26,13 @@ app.use((err, req, res, next) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
+// ... existing code ...
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
+// Keep-alive (prevent Render free tier from sleeping)
+if (process.env.NODE_ENV === 'production') {
+  require('./keep-alive');
+}
