@@ -18,21 +18,25 @@ app.get('/', (req, res) => {
   res.json({ message: 'Money Manager API is running', status: 'active' });
 });
 
+// Health check endpoint for keep-alive
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 app.use((err, req, res, next) => {
   console.error('Error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-});
-// ... existing code ...
-
-app.listen(PORT, '0.0.0.0', () => {
+// Start server
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-// Keep-alive (prevent Render free tier from sleeping)
-if (process.env.NODE_ENV === 'production') {
-  require('./keep-alive');
-}
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+  });
+});
